@@ -1,0 +1,19 @@
+{
+  "name": "universal-ide",
+  "productName": "Universal IDE",
+  "version": "1.0.0",
+  "description": "Красива легка IDE для всіх мов. Запуск JS, Python і HTML-прев'ю прямо в програмі.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": ["ide", "editor", "python", "javascript", "monaco", "electron"],
+  "author": "you",
+  "license": "MIT",
+  "dependencies": {
+    "monaco-editor": "^0.52.0"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0"
+  }
+}

@@ -1,0 +1,160 @@
+/* ===== Material 3 токени ===== */
+:root {
+  /* темна схема */
+  --primary: #D0BCFF;
+  --on-primary: #381E72;
+  --primary-container: #4F378B;
+  --on-primary-container: #EADDFF;
+  --secondary-container: #4A4458;
+  --on-secondary-container: #E8DEF8;
+  --surface: #141218;
+  --surface-container-low: #1D1B20;
+  --surface-container: #211F26;
+  --surface-container-high: #2B2930;
+  --surface-container-highest: #36343B;
+  --on-surface: #E6E0E9;
+  --on-surface-variant: #CAC4D0;
+  --outline: #8B8891;
+  --outline-variant: #49454F;
+  --error: #F2B8B5;
+  --on-error: #601410;
+  --error-container: #8C1D18;
+  --on-error-container: #F9DEDC;
+  --elev-1: 0 1px 2px rgba(0,0,0,.35), 0 1px 3px 1px rgba(0,0,0,.2);
+  --elev-2: 0 1px 3px rgba(0,0,0,.4), 0 4px 8px 3px rgba(0,0,0,.25);
+  --shape-sm: 8px; --shape-md: 12px; --shape-lg: 16px; --shape-xl: 28px;
+  --mono: Consolas, 'Cascadia Code', monospace;
+}
+body.light {
+  --primary: #6750A4;
+  --on-primary: #FFFFFF;
+  --primary-container: #EADDFF;
+  --on-primary-container: #21005D;
+  --secondary-container: #E8DEF8;
+  --on-secondary-container: #1D192B;
+  --surface: #FEF7FF;
+  --surface-container-low: #F7F2FA;
+  --surface-container: #F3EDF7;
+  --surface-container-high: #ECE6F0;
+  --surface-container-highest: #E6E0E9;
+  --on-surface: #1D1B20;
+  --on-surface-variant: #49454F;
+  --outline: #79747E;
+  --outline-variant: #CAC4D0;
+  --error: #B3261E;
+  --on-error: #FFFFFF;
+  --error-container: #F9DEDC;
+  --on-error-container: #410E0B;
+  --elev-1: 0 1px 2px rgba(0,0,0,.12), 0 1px 3px 1px rgba(0,0,0,.08);
+  --elev-2: 0 1px 3px rgba(0,0,0,.12), 0 4px 8px 3px rgba(0,0,0,.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  display: flex; flex-direction: column;
+  background: var(--surface); color: var(--on-surface);
+  font: 400 14px/1.4 Roboto, 'Segoe UI', system-ui, sans-serif;
+  user-select: none;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ===== топ-апбар ===== */
+#appbar {
+  display: flex; align-items: center; gap: 8px;
+  height: 64px; padding: 0 16px;
+  background: var(--surface-container);
+  box-shadow: var(--elev-1); z-index: 5;
+}
+#appIcon { font-size: 28px; color: var(--primary); }
+#appTitle { font-size: 22px; font-weight: 500; letter-spacing: .2px; }
+.spacer { flex: 1; }
+
+.icon-btn {
+  width: 40px; height: 40px; border: 0; border-radius: 50%;
+  background: transparent; color: var(--on-surface-variant);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .15s;
+}
+.icon-btn:hover { background: var(--surface-container-highest); color: var(--on-surface); }
+.icon-btn:active { background: var(--secondary-container); }
+.icon-btn .material-symbols-outlined { font-size: 24px; }
+
+/* ===== робоча область ===== */
+#main { flex: 1; display: flex; min-height: 0; }
+#editorWrap { flex: 1; min-width: 0; }
+#resizer { width: 4px; cursor: col-resize; flex: none; background: transparent; }
+#resizer:hover { background: var(--primary); }
+
+/* Monaco зливається з поверхнею Material */
+.monaco-editor, .monaco-editor-background, .monaco-editor .margin {
+  background-color: var(--surface) !important;
+}
+.monaco-editor .margin { border-right: 1px solid var(--outline-variant) !important; }
+
+/* ===== панель ===== */
+#panel {
+  width: 420px; min-width: 220px; max-width: 70%;
+  display: flex; flex-direction: column;
+  background: var(--surface-container-low);
+  border-left: 1px solid var(--outline-variant);
+}
+#panelTabs {
+  display: flex; gap: 4px; padding: 12px 16px;
+  background: var(--surface-container);
+}
+.seg {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 12px; border: 1px solid var(--outline); border-radius: var(--shape-md);
+  background: transparent; color: var(--on-surface-variant);
+  font: 500 14px Roboto, sans-serif; cursor: pointer; transition: all .15s;
+}
+.seg .material-symbols-outlined { font-size: 18px; }
+.seg:hover { background: var(--surface-container-high); }
+.seg.active {
+  background: var(--secondary-container); color: var(--on-secondary-container);
+  border-color: transparent;
+}
+#console {
+  flex: 1; overflow: auto; padding: 12px 16px;
+  font: 13px/1.6 var(--mono);
+  white-space: pre-wrap; word-break: break-word; user-select: text;
+}
+#console .cmd { color: var(--on-surface-variant); }
+#console .out { color: var(--on-surface); }
+#console .err { color: var(--error); font-weight: 500; }
+#console .info { color: var(--on-surface-variant); font-style: italic; }
+#preview { flex: 1; width: 100%; border: 0; background: #fff; }
+
+/* ===== FAB ===== */
+.fab {
+  position: fixed; right: 20px; bottom: 56px; z-index: 10;
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 0 24px; height: 56px; border: 0; border-radius: var(--shape-lg);
+  background: var(--primary-container); color: var(--on-primary-container);
+  font: 600 15px Roboto, sans-serif; letter-spacing: .3px;
+  box-shadow: var(--elev-2); cursor: pointer; transition: box-shadow .2s, transform .1s;
+}
+.fab .material-symbols-outlined { font-size: 26px; }
+.fab:hover { box-shadow: 0 2px 4px rgba(0,0,0,.5), 0 8px 16px 6px rgba(0,0,0,.3); }
+.fab:active { transform: scale(.96); }
+
+/* ===== статус-бар ===== */
+#statusbar {
+  display: flex; align-items: center; gap: 16px;
+  height: 28px; padding: 0 16px;
+  background: var(--surface-container-highest);
+  color: var(--on-surface-variant);
+  font-size: 12.5px;
+}
+#statusbar span:last-child { margin-left: auto; }
+#stDirty { color: var(--error); }
+
+@media (max-width: 900px) {
+  #panel { width: 320px; }
+  #fabLabel { display: none; }
+  .fab { padding: 0 18px; }
+}

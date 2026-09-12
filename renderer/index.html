@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; worker-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com" />
+  <title>Universal IDE</title>
+  <!-- Material 3 шрифти: іконки + Roboto. ponytail: з мережі; офлайн-бандл — коли пакуватимемо .exe -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-50..200&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../node_modules/monaco-editor/min/vs/editor/editor.main.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="appbar">
+    <span class="material-symbols-outlined" id="appIcon">code_blocks</span>
+    <span id="appTitle">Universal IDE</span>
+    <span class="spacer"></span>
+    <button class="icon-btn" id="btnNew" title="Новий файл (Ctrl+N)"><span class="material-symbols-outlined">add</span></button>
+    <button class="icon-btn" id="btnOpen" title="Відкрити файл (Ctrl+O)"><span class="material-symbols-outlined">folder_open</span></button>
+    <button class="icon-btn" id="btnSave" title="Зберегти (Ctrl+S)"><span class="material-symbols-outlined">save</span></button>
+    <button class="icon-btn" id="btnTheme" title="Перемкнути тему"><span class="material-symbols-outlined">dark_mode</span></button>
+  </header>
+
+  <main id="main">
+    <section id="editorWrap"></section>
+    <div id="resizer" title="Потягни"></div>
+    <aside id="panel">
+      <div id="panelTabs" role="tablist">
+        <button class="seg active" data-tab="console"><span class="material-symbols-outlined">terminal</span>Консоль</button>
+        <button class="seg" data-tab="preview"><span class="material-symbols-outlined">web</span>Прев'ю</button>
+      </div>
+      <div id="console"></div>
+      <iframe id="preview" hidden sandbox="allow-scripts allow-modals" title="Прев'ю"></iframe>
+    </aside>
+  </main>
+
+  <button id="btnRun" class="fab" title="Запуск (F5)">
+    <span class="material-symbols-outlined">play_arrow</span><span id="fabLabel">Запуск</span>
+  </button>
+
+  <footer id="statusbar">
+    <span id="stFile">новий файл</span>
+    <span id="stLang"></span>
+    <span id="stDirty"></span>
+    <span id="stPos"></span>
+  </footer>
+
+  <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+  <script>
+    require.config({ paths: { vs: '../node_modules/monaco-editor/min/vs' } });
+    // Порожній воркер: правимо без важкої IntelliSense-підсистеми, підсвітка для 30+ мов працює
+    self.MonacoEnvironment = {
+      getWorkerUrl: () => 'data:text/javascript;charset=utf-8,' + encodeURIComponent('self.onmessage=()=>{};'),
+    };
+    require(['vs/editor/editor.main'], function () { window.initApp(); });
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>
