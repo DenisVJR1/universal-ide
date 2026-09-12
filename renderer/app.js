@@ -1,10 +1,8 @@
 /* Universal IDE — рендерер */
 let editor = null;
-let model = null;
-let currentPath = null;
-let dirty = false;
 let dark = true;
 
+/* Підтримувані мови: розширення -> monaco language id */
 const LANG_BY_EXT = {
   js: 'javascript', mjs: 'javascript', cjs: 'javascript', ts: 'typescript',
   py: 'python', pyw: 'python', ipynb: 'json',
@@ -22,35 +20,83 @@ const EXT_DEFAULT = {
   css: 'css', json: 'json', markdown: 'md', yaml: 'yml', xml: 'xml', shell: 'sh',
 };
 
+/* Відкриті файли: { title, path, model, dirty } */
+let files = [];
+let activeIndex = -1;
+
 const $ = (id) => document.getElementById(id);
-const extOf = (name) => (name.match(/\.([^.]+)$/) || [])[1]?.toLowerCase();
-
-function langOf(name) {
-  const e = extOf(name);
-  return (e && LANG_BY_EXT[e]) || 'plaintext';
-}
-
-function setModel(content, name) {
-  const lang = langOf(name);
-  const m = monaco.editor.createModel(content ?? '', lang);
-  editor.setModel(m);
-  if (model) model.dispose();
-  model = m;
-  return lang;
-}
-
-function title() { document.title = (dirty ? '● ' : '') + (currentPath ? basename(currentPath) : 'новий файл') + ' — Universal IDE'; }
 const basename = (p) => p.split(/[\\/]/).pop();
+const extOf = (name) => (name.match(/\.([^.]+)$/) || [])[1]?.toLowerCase();
+const langOf = (name) => (extOf(name) && LANG_BY_EXT[extOf(name)]) || 'plaintext';
+const entry = () => files[activeIndex];
 
-function setDirty(v) {
-  dirty = v;
-  $('stDirty').textContent = dirty ? '● не збережено' : '';
+/* ---------- вкладки ---------- */
+function renderTabs() {
+  const bar = $('tabbar');
+  bar.innerHTML = '';
+  files.forEach((f, i) => {
+    const b = document.createElement('button');
+    b.className = 'tab' + (i === activeIndex ? ' active' : '');
+    b.title = f.path || 'новий файл';
+    b.onclick = () => activate(i);
+    const label = document.createElement('span');
+    label.textContent = (f.dirty ? '● ' : '') + f.title;
+    b.appendChild(label);
+    if (files.length > 1) {
+      const x = document.createElement('span');
+      x.className = 'close material-symbols-outlined';
+      x.textContent = 'close';
+      x.title = 'Закрити (Ctrl+W)';
+      x.onclick = (e) => { e.stopPropagation(); closeTab(i); };
+      b.appendChild(x);
+    }
+    bar.appendChild(b);
+  });
+  bar.scrollLeft = bar.scrollWidth;
+}
+
+function activate(i) {
+  activeIndex = i;
+  editor.setModel(entry().model);
+  setStatus();
+  renderTabs();
   title();
 }
 
-function statusPos() {
-  const c = editor.getPosition();
-  $('stPos').textContent = `Ln ${c.lineNumber}, Col ${c.column}`;
+function addFile(content, name, path) {
+  const f = { title: basename(name) || 'новий файл', path: path || null, model: monaco.editor.createModel(content ?? '', langOf(name)), dirty: false };
+  files.push(f);
+  activate(files.length - 1);
+  return f;
+}
+
+function closeTab(i) {
+  if (files.length <= 1) return;
+  const wasActive = i === activeIndex;
+  const f = files[i];
+  f.model.dispose();
+  files.splice(i, 1);
+  if (wasActive) {
+    activeIndex = Math.min(i, files.length - 1);
+    editor.setModel(entry().model);
+  } else if (i < activeIndex) activeIndex--;
+  setStatus();
+  renderTabs();
+  title();
+}
+
+function title() {
+  const e = entry();
+  document.title = (e ? (e.dirty ? '● ' : '') + e.title : 'Universal IDE') + ' — Universal IDE';
+}
+
+function setDirty(v) {
+  const e = entry();
+  if (!e) return;
+  e.dirty = v;
+  $('stDirty').textContent = v ? 'не збережено' : '';
+  renderTabs();
+  title();
 }
 
 /* ---------- консоль ---------- */
@@ -68,15 +114,17 @@ const fmt = (a) => a.map((v) => {
 }).join(' ');
 
 function runJS() {
-  const text = model.getValue();
+  const text = entry().model.getValue();
   const real = { log: console.log, warn: console.warn, error: console.error, info: console.info };
   console.log = (...a) => out('out', fmt(a));
   console.warn = (...a) => out('info', fmt(a));
   console.error = (...a) => out('err', fmt(a));
   console.info = (...a) => out('out', fmt(a));
   out('cmd', '> ' + (text.split('\n')[0] || '') + (text.includes('\n') ? ' …' : ''));
+  const t0 = performance.now();
   try { (0, eval)(text); } // indirect eval: без витоку локальних змінних
   catch (e) { out('err', String(e && e.stack || e)); }
+  out('info', `⏱ ${((performance.now() - t0) / 1000).toFixed(2)} с`);
   console.log = real.log; console.warn = real.warn; console.error = real.error; console.info = real.info;
 }
 
@@ -89,7 +137,7 @@ function loadPy() {
       await new Promise((res, rej) => {
         const s = document.createElement('script');
         s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js';
-        s.onload = res; s.onerror = () => rej(new Error('Немає доступу до CDN')),
+        s.onload = res; s.onerror = () => rej(new Error('Немає доступу до CDN'));
         document.head.appendChild(s);
       });
       const py = await window.loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/' });
@@ -105,27 +153,29 @@ async function runPy() {
   try {
     const py = await loadPy();
     out('cmd', '> python');
-    await py.runPythonAsync(model.getValue());
+    const t0 = performance.now();
+    await py.runPythonAsync(entry().model.getValue());
+    out('info', `⏱ ${((performance.now() - t0) / 1000).toFixed(2)} с`);
   } catch (e) { out('err', String(e && e.message || e)); }
 }
 
 /* ---------- html прев'ю ---------- */
-function showTab(tab) {
+function showPanelTab(tab) {
   $('tabConsole').classList.toggle('active', tab === 'console');
   $('tabPreview').classList.toggle('active', tab === 'preview');
   $('console').hidden = tab !== 'console';
   $('preview').hidden = tab !== 'preview';
 }
 function runHtml() {
-  $('preview').srcdoc = model.getValue();
-  showTab('preview');
+  $('preview').srcdoc = entry().model.getValue();
+  showPanelTab('preview');
 }
 
 function run() {
-  const lang = model.getLanguageId();
+  const lang = entry().model.getLanguageId();
   if (lang === 'python') runPy();
   else if (lang === 'html') runHtml();
-  else { showTab('console'); runJS(); }
+  else { showPanelTab('console'); runJS(); }
 }
 
 /* ---------- файли ---------- */
@@ -133,41 +183,51 @@ async function openFile() {
   const r = await window.uni.openFile();
   if (!r) return;
   if (r.error) { out('err', 'Не вдалось відкрити: ' + r.error); return; }
-  setModel(r.content, r.path);
-  currentPath = r.path;
+  addFile(r.content, r.path, r.path);
+}
+
+async function save() {
+  const f = entry();
+  const content = f.model.getValue();
+  if (f.path) { f.path = await window.uni.saveTo({ path: f.path, content }); }
+  else {
+    const p = await window.uni.saveDialog({ content, defaultPath: 'untitled.' + (EXT_DEFAULT[f.model.getLanguageId()] || 'txt') });
+    if (!p) return;
+    f.path = p;
+    f.title = basename(p);
+  }
   setDirty(false);
   setStatus();
 }
 
-function extForSave(lang) {
-  if (currentPath) return currentPath;
-  return 'untitled.' + (EXT_DEFAULT[lang] || 'txt');
-}
-
-async function save() {
-  const content = model.getValue();
-  if (currentPath) { currentPath = await window.uni.saveTo({ path: currentPath, content }); }
-  else {
-    const p = await window.uni.saveDialog({ content, defaultPath: extForSave(model.getLanguageId()) });
-    if (!p) return;
-    currentPath = p;
-  }
+async function saveAs() {
+  const f = entry();
+  const p = await window.uni.saveDialog({ content: f.model.getValue(), defaultPath: f.path || 'untitled.' + (EXT_DEFAULT[f.model.getLanguageId()] || 'txt') });
+  if (!p) return;
+  f.path = p;
+  f.title = basename(p);
   setDirty(false);
   setStatus();
 }
 
 /* ---------- статус-бар ---------- */
 function setStatus() {
-  $('stFile').textContent = currentPath ? basename(currentPath) : 'новий файл';
-  $('stLang').textContent = extOf(currentPath ? currentPath : '') ? String(extOf(currentPath)).toUpperCase() : model.getLanguageId();
+  const f = entry();
+  if (!f) return;
+  $('stFile').textContent = f.title;
+  $('stLang').textContent = extOf(f.path || f.title) ? String(extOf(f.path || f.title)).toUpperCase() : f.model.getLanguageId();
   title();
 }
 
 /* ---------- ініціалізація ---------- */
 window.initApp = function () {
+  const SAMPLE = '# Вітаю в Universal IDE!\n# Це Python. Натисни F5 — і він виконається прямо тут.\nprint("Привіт, світе 🚀")\n';
+  const m0 = monaco.editor.createModel(SAMPLE, 'python');
+  files.push({ title: 'hello.py', path: null, model: m0, dirty: false });
+  activeIndex = 0;
+
   editor = monaco.editor.create($('editorWrap'), {
-    value: '# Вітаю в Universal IDE!\n# Це Python. Натисни F5 — і він виконається прямо тут.\nprint("Привіт, світе 🚀")\n',
-    language: 'python',
+    model: m0,
     theme: 'vs-dark',
     fontSize: 14,
     fontFamily: "Consolas, 'Cascadia Code', monospace",
@@ -179,10 +239,11 @@ window.initApp = function () {
     renderWhitespace: 'selection',
   });
 
-  model = editor.getModel();
-
   editor.onDidChangeCursorPosition(statusPos);
-  editor.onDidChangeModelContent(() => setDirty(true));
+  editor.onDidChangeModelContent(() => {
+    const now = entry();
+    if (now && now.model === editor.getModel() && !now.dirty) setDirty(true);
+  });
   statusPos();
 
   /* клавіші */
@@ -191,6 +252,7 @@ window.initApp = function () {
     if (mod && e.key === 'o') { e.preventDefault(); openFile(); }
     else if (mod && e.key === 's') { e.preventDefault(); e.shiftKey ? saveAs() : save(); }
     else if (mod && e.key === 'n') { e.preventDefault(); newFile(); }
+    else if (mod && e.key === 'w') { e.preventDefault(); closeTab(activeIndex); }
     else if (e.key === 'F5' || (mod && e.key === 'Enter')) { e.preventDefault(); run(); }
   });
 
@@ -205,8 +267,8 @@ window.initApp = function () {
     document.body.classList.toggle('light', !dark);
     $('btnTheme').querySelector('.material-symbols-outlined').textContent = dark ? 'dark_mode' : 'light_mode';
   };
-  $('tabConsole').onclick = () => showTab('console');
-  $('tabPreview').onclick = () => showTab('preview');
+  $('tabConsole').onclick = () => showPanelTab('console');
+  $('tabPreview').onclick = () => showPanelTab('preview');
 
   /* ресайзер панелі */
   const rz = $('resizer');
@@ -226,27 +288,18 @@ window.initApp = function () {
     const f = e.dataTransfer.files[0];
     if (!f) return;
     const rd = new FileReader();
-    rd.onload = () => { setModel(rd.result, f.name); currentPath = null; setDirty(false); setStatus(); };
+    rd.onload = () => addFile(rd.result, f.name, null);
     rd.readAsText(f);
   });
+
+  /* попередження при закритті з незбереженими змінами */
+  window.onbeforeunload = () => { if (files.some((f) => f.dirty)) return true; };
 
   setStatus();
   title();
 };
 
 function newFile() {
-  const lang = model ? model.getLanguageId() : 'plaintext';
-  setModel('', 'untitled.' + (EXT_DEFAULT[lang] || 'txt'));
-  currentPath = null;
-  setDirty(false);
-  setStatus();
-}
-
-/* save as = тимчасово скидаємо шлях */
-async function saveAs() {
-  const p = await window.uni.saveDialog({ content: model.getValue(), defaultPath: extForSave(model.getLanguageId()) });
-  if (!p) return;
-  currentPath = p;
-  setDirty(false);
-  setStatus();
+  const lang = entry() ? entry().model.getLanguageId() : 'python';
+  addFile('', 'нов.' + (EXT_DEFAULT[lang] || 'txt'), null);
 }

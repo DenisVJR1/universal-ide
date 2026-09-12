@@ -153,6 +153,33 @@ body {
 #statusbar span:last-child { margin-left: auto; }
 #stDirty { color: var(--error); }
 
+/* ===== вкладки файлів ===== */
+#tabbar {
+  display: flex; align-items: center; gap: 4px;
+  height: 44px; padding: 6px 10px;
+  background: var(--surface-container-low);
+  border-bottom: 1px solid var(--outline-variant);
+  overflow-x: auto; overflow-y: hidden; flex: none;
+  scrollbar-width: thin;
+}
+#tabbar::-webkit-scrollbar { height: 4px; }
+#tabbar::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 2px; }
+.tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 8px 0 14px;
+  border: 1px solid transparent; border-radius: var(--shape-md);
+  background: transparent; color: var(--on-surface-variant);
+  font: 500 13px Roboto, sans-serif; cursor: pointer;
+  white-space: nowrap; transition: background .15s;
+}
+.tab:hover { background: var(--surface-container-high); }
+.tab.active { background: var(--secondary-container); color: var(--on-secondary-container); }
+.tab .close {
+  font-size: 16px; border-radius: 50%; padding: 1px;
+  display: inline-flex; opacity: .7;
+}
+.tab .close:hover { background: var(--surface-container-highest); opacity: 1; }
+
 @media (max-width: 900px) {
   #panel { width: 320px; }
   #fabLabel { display: none; }
