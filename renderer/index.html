@@ -65,13 +65,6 @@
   </footer>
 
   <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
-  <script>
-    require.config({ paths: { vs: '../node_modules/monaco-editor/min/vs' } });
-    self.MonacoEnvironment = {
-      getWorkerUrl: () => 'data:text/javascript;charset=utf-8,' + encodeURIComponent('self.onmessage=()=>{};'),
-    };
-    require(['vs/editor/editor.main'], function () { window.initApp(); });
-  </script>
   <script src="app.js"></script>
 </body>
 </html>
