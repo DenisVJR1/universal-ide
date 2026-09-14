@@ -81,7 +81,9 @@ body {
 }
 .icon-btn:hover { background: var(--surface-container-highest); color: var(--on-surface); }
 .icon-btn:active { background: var(--secondary-container); }
-.icon-btn .material-symbols-outlined { font-size: 24px; }
+.icon-btn .material-symbols-outlined { font-size: 22px; }
+.icon-btn.active-btn { background: var(--secondary-container); color: var(--on-secondary-container); }
+.toolbar-sep { width: 1px; height: 24px; background: var(--outline-variant); margin: 0 2px; }
 
 /* ===== робоча область ===== */
 #main { flex: 1; display: flex; min-height: 0; }
@@ -152,6 +154,13 @@ body {
 }
 #statusbar span:last-child { margin-left: auto; }
 #stDirty { color: var(--error); }
+.st-btn {
+  border: 0; background: transparent; color: inherit;
+  font: inherit; cursor: pointer; padding: 2px 6px; border-radius: var(--shape-sm);
+}
+.st-btn:hover { background: var(--surface-container-high); }
+#problems { flex: 1; overflow: auto; padding: 12px 16px; font: 13px/1.6 var(--mono); user-select: text; }
+#problems .err-msg { color: var(--error); padding: 4px 0; }
 
 /* ===== вкладки файлів ===== */
 #tabbar {

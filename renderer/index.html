@@ -5,7 +5,6 @@
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; worker-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com" />
   <title>Universal IDE</title>
-  <!-- Material 3 шрифти: іконки + Roboto. ponytail: з мережі; офлайн-бандл — коли пакуватимемо .exe -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-50..200&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -17,24 +16,38 @@
     <span class="material-symbols-outlined" id="appIcon">code_blocks</span>
     <span id="appTitle">Universal IDE</span>
     <span class="spacer"></span>
-    <button class="icon-btn" id="btnNew" title="Новий файл (Ctrl+N)"><span class="material-symbols-outlined">add</span></button>
+    <button class="icon-btn" id="btnNew" title="Новий файл (Ctrl+N)"><span class="material-symbols-outlined">note_add</span></button>
     <button class="icon-btn" id="btnOpen" title="Відкрити файл (Ctrl+O)"><span class="material-symbols-outlined">folder_open</span></button>
     <button class="icon-btn" id="btnSave" title="Зберегти (Ctrl+S)"><span class="material-symbols-outlined">save</span></button>
+    <button class="icon-btn" id="btnSaveAs" title="Зберегти як (Ctrl+Shift+S)"><span class="material-symbols-outlined">save_as</span></button>
+    <span class="toolbar-sep"></span>
+    <button class="icon-btn" id="btnUndo" title="Відміна (Ctrl+Z)"><span class="material-symbols-outlined">undo</span></button>
+    <button class="icon-btn" id="btnRedo" title="Повтор (Ctrl+Y)"><span class="material-symbols-outlined">redo</span></button>
+    <span class="toolbar-sep"></span>
+    <button class="icon-btn" id="btnFind" title="Пошук (Ctrl+F)"><span class="material-symbols-outlined">search</span></button>
+    <button class="icon-btn" id="btnWrap" title="Перенос рядків"><span class="material-symbols-outlined">wrap_text</span></button>
+    <button class="icon-btn" id="btnMinimap" title="Мінімапа"><span class="material-symbols-outlined">map</span></button>
+    <span class="toolbar-sep"></span>
+    <button class="icon-btn" id="btnFontDown" title="Менший шрифт (Ctrl+-)"><span class="material-symbols-outlined">text_decrease</span></button>
+    <button class="icon-btn" id="btnFontUp" title="Більший шрифт (Ctrl++)"><span class="material-symbols-outlined">text_increase</span></button>
+    <span class="toolbar-sep"></span>
     <button class="icon-btn" id="btnTheme" title="Перемкнути тему"><span class="material-symbols-outlined">dark_mode</span></button>
   </header>
 
-  <div id="tabbar" aria-label="Відкриті файли"></div>
+  <div id="tabbar" role="tablist" aria-label="Відкриті файли"></div>
 
   <main id="main">
     <section id="editorWrap"></section>
     <div id="resizer" title="Потягни"></div>
     <aside id="panel">
       <div id="panelTabs" role="tablist">
-        <button class="seg active" data-tab="console"><span class="material-symbols-outlined">terminal</span>Консоль</button>
-        <button class="seg" data-tab="preview"><span class="material-symbols-outlined">web</span>Прев'ю</button>
+        <button class="seg active" id="tabConsole" data-tab="console"><span class="material-symbols-outlined">terminal</span>Консоль</button>
+        <button class="seg" id="tabPreview" data-tab="preview"><span class="material-symbols-outlined">web</span>Прев'ю</button>
+        <button class="seg" id="tabProblems" data-tab="problems"><span class="material-symbols-outlined">bug_report</span>Проблеми</button>
       </div>
       <div id="console"></div>
       <iframe id="preview" hidden sandbox="allow-scripts allow-modals" title="Прев'ю"></iframe>
+      <div id="problems" hidden></div>
     </aside>
   </main>
 
@@ -43,16 +56,17 @@
   </button>
 
   <footer id="statusbar">
-    <span id="stFile">новий файл</span>
-    <span id="stLang"></span>
+    <button class="st-btn" id="stLang" title="Мова"></button>
+    <button class="st-btn" id="stTabSize" title="Розмір табуляції">spaces: 4</button>
     <span id="stDirty"></span>
-    <span id="stPos"></span>
+    <span class="spacer"></span>
+    <span id="stPos">Ln 1, Col 1</span>
+    <span id="stFile">новий файл</span>
   </footer>
 
   <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
   <script>
     require.config({ paths: { vs: '../node_modules/monaco-editor/min/vs' } });
-    // Порожній воркер: правимо без важкої IntelliSense-підсистеми, підсвітка для 30+ мов працює
     self.MonacoEnvironment = {
       getWorkerUrl: () => 'data:text/javascript;charset=utf-8,' + encodeURIComponent('self.onmessage=()=>{};'),
     };
